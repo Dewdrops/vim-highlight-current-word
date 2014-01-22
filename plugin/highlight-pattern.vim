@@ -1,18 +1,18 @@
-" File: highlight.vim
+" File: highlight-pattern.vim
 " Author: Dewdrops <v_v_4474@126.com>
 " Version: 0.1
 " Last Modified: Tue Apr 12 15:18:16 IST 2011
 " Description: Highlight current word or certain pattern
 " Uasge:
 "     <leader>hl   Toggle highlight word under cursor
-"     <leader>hp   Toggle highlight pattern
+"     <leader>hp   Highlight pattern
 "     <leader>/    Clear all highlights
 "
 "   All above commands work in both normal & insert modes.
 "   <C-h><C-h> also works in visual mode. (Select desired lines & hit <C-h><C-h>)
 "
 " Installation:
-"   Copy highlight-current-word.vim to your .vim/plugin directory
+"   Copy highlight-pattern.vim to your .vim/plugin directory
 "
 " Configuration:
 "   To define custom colors set the following variables
@@ -36,11 +36,11 @@ syntax on
 
 " TODO: implement disable
 " Toggle highlight word under cursor
-nnoremap  <silent> <leader>hl :call <SID>Highlight("w") \| nohls<CR>
-" Toggle highlight pattern
-nnoremap  <silent> <leader>hl :call <SID>Highlight("w") \| nohls<CR>
+nnoremap  <silent> <leader>hl :call <SID>HighlightWord() \| nohls<CR>
+" Highlight pattern
+nnoremap  <silent> <leader>hp :call <SID>HighlightPattern() \| nohls<CR>
 " Clear all highlights
-nnoremap  <silent> <leader>/ :call <SID>Highlight("n") \| nohls<CR>
+nnoremap  <silent> <leader>/ :call <SID>HighlightClear() \| nohls<CR>
 
 
 " Define colors for highlight
@@ -61,28 +61,23 @@ if !exists('g:pcolor_fg_cterm')
 endif
 
 
-" Highlight: Highlight word
-function! <SID>Highlight(mode)
-
+" Highlight: Toggle highlight word
+function! <SID>HighlightWord()
    let cur_word = expand("<cword>")
+   let s:pcolor_n = s:pcolor_n == s:pcolor_max - 1 ?  1 : s:pcolor_n + 1
+   exec 'syn match ' . s:pcolor_grp . s:pcolor_n . ' "\<' . cur_word . '\>" containedin=ALL'
+endfunction
 
-   " Word mode
-   if a:mode == 'w'
-      let s:pcolor_n = s:pcolor_n == s:pcolor_max - 1 ?  1 : s:pcolor_n + 1
-      exec 'syn match ' . s:pcolor_grp . s:pcolor_n . ' "\<' . cur_word . '\>" containedin=ALL'
-   endif
 
-   " Clean all
-   if a:mode == 'n'
-      let ccol = 0
-      while ccol < s:pcolor_max
-         exec 'syn clear '. s:pcolor_grp . ccol
-         let ccol = ccol + 1
-      endw
+function! <SID>HighlightClear()
+    " Clean all
+    let ccol = 0
+    while ccol < s:pcolor_max
+        exec 'syn clear '. s:pcolor_grp . ccol
+        let ccol = ccol + 1
+    endw
 
-      let s:pcolor_n = 0
-   endif
-
+    let s:pcolor_n = 0
 endfunction
 
 
