@@ -1,23 +1,23 @@
-" File: highlight-pattern.vim
+" File: vim-highlight-pattern.vim
 " Author: Dewdrops <v_v_4474@126.com>
 " Version: 0.1
 " Last Modified: Tue Apr 12 15:18:16 IST 2011
 " Description: Highlight current word or certain pattern
 " Uasge:
-"     <leader>hl   Toggle highlight word under cursor
+"     <leader>hl   Toggle highlight word under cursor (or text in the region
+"     if in visual mode)
 "     <leader>hp   Highlight pattern
 "     <leader>/    Clear all highlights
 "
-"   All above commands work in both normal & insert modes.
-"   <C-h><C-h> also works in visual mode. (Select desired lines & hit <C-h><C-h>)
-"
 " Installation:
-"   Copy highlight-pattern.vim to your .vim/plugin directory
+"   Copy vim-highlight-pattern.vim to your .vim/plugin directory
 "
 " Configuration:
 "   To define custom colors set the following variables
-"     g:pcolor_bg - Background color for word highlighting
-"     g:pcolor_fg - Foreground color for word highlighting
+"     g:pcolor_bg - Background color for highlight in gui
+"     g:pcolor_fg - Foreground color for highlight in gui
+"     g:pcolor_bg_cterm - Background color for highlight in term
+"     g:pcolor_fg_cterm - Foreground color for highlight in term
 "
 " Acknowledgement:
 "   Based on Amit Sethi(<amitrajsethi@yahoo.com>)'s highlight.vim
@@ -34,13 +34,27 @@ syntax on
 
 " -- Mappings --
 
-" TODO: implement disable
+nmap  <silent> <Plug>(VHP_HighlightWordToggle) :call VHP_HighlightWordToggle() \| nohls<CR>
+vmap  <silent> <Plug>(VHP_HighlightRegionToggle) :call VHP_HighlightRegionToggle() \| nohls<CR>
+nmap  <silent> <Plug>(VHP_HighlightPattern) :call VHP_HighlightPattern() \| nohls<CR>
+nmap  <silent> <Plug>(VHP_HighlightClear) :call VHP_HighlightClear() \| nohls<CR>
+
 " Toggle highlight word under cursor
-nnoremap  <silent> <leader>hl :call <SID>HighlightWord() \| nohls<CR>
+if !hasmapto('<Plug>(VHP_HighlightWordToggle)')
+    nmap  <silent> <leader>hl <Plug>(VHP_HighlightWordToggle)
+endif
+" Toggle highlight text depend on text in the region
+if !hasmapto('<Plug>(VHP_HighlightRegionToggle)')
+    vmap  <silent> <leader>hl <Plug>(VHP_HighlightRegionToggle)
+endif
 " Highlight pattern
-nnoremap  <silent> <leader>hp :call <SID>HighlightPattern() \| nohls<CR>
+if !hasmapto('<Plug>(VHP_HighlightPattern)')
+    nmap  <silent> <leader>hp <Plug>(VHP_HighlightPattern)
+endif
 " Clear all highlights
-nnoremap  <silent> <leader>/ :call <SID>HighlightClear() \| nohls<CR>
+if !hasmapto('<Plug>(VHP_HighlightClear)')
+    nmap  <silent> <leader>/ <Plug>(VHP_HighlightClear)
+endif
 
 
 " Define colors for highlight
@@ -62,14 +76,54 @@ endif
 
 
 " Highlight: Toggle highlight word
-function! <SID>HighlightWord()
-   let cur_word = expand("<cword>")
-   let s:pcolor_n = s:pcolor_n == s:pcolor_max - 1 ?  1 : s:pcolor_n + 1
-   exec 'syn match ' . s:pcolor_grp . s:pcolor_n . ' "\<' . cur_word . '\>" containedin=ALL'
+function! VHP_HighlightWordToggle()
+    let cur_word = expand("<cword>")
+    let idx = 0
+    while idx < len(s:colored_words)
+        let it = s:colored_words[idx]
+        if it[0] == cur_word
+            exec 'syn clear '. it[1]
+            call remove(s:colored_words, idx)
+            return
+        endif
+        let idx = idx + 1
+    endwhile
+    let s:pcolor_n = s:pcolor_n == s:pcolor_max - 1 ?  1 : s:pcolor_n + 1
+    call add(s:colored_words, [cur_word, s:pcolor_grp . s:pcolor_n])
+    exec 'syn match ' . s:pcolor_grp . s:pcolor_n . ' "\<' . cur_word . '\>" containedin=ALL'
+endfunction
+
+" Highlight: Toggle highlight region
+function! VHP_HighlightRegionToggle()
+    let reg = '"'
+    let [save_reg, save_type] = [getreg(reg), getregtype(reg)]
+    normal! gvy
+    let text = @"
+    call setreg(reg, save_reg, save_type)
+    let idx = 0
+    while idx < len(s:colored_words)
+        let it = s:colored_words[idx]
+        if it[0] == text
+            exec 'syn clear '. it[1]
+            call remove(s:colored_words, idx)
+            return
+        endif
+        let idx = idx + 1
+    endwhile
+    let s:pcolor_n = s:pcolor_n == s:pcolor_max - 1 ?  1 : s:pcolor_n + 1
+    call add(s:colored_words, [text, s:pcolor_grp . s:pcolor_n])
+    exec 'syn match ' . s:pcolor_grp . s:pcolor_n . ' "' . text . '" containedin=ALL'
+endfunction
+
+" Highlight: Highlight pattern
+function! VHP_HighlightPattern()
+    let pat = input("Pattern: ")
+    let s:pcolor_n = s:pcolor_n == s:pcolor_max - 1 ?  1 : s:pcolor_n + 1
+    exec 'syn match ' . s:pcolor_grp . s:pcolor_n . ' "\<' . pat . '\>" containedin=ALL'
 endfunction
 
 
-function! <SID>HighlightClear()
+function! VHP_HighlightClear()
     " Clean all
     let ccol = 0
     while ccol < s:pcolor_max
@@ -116,11 +170,11 @@ function! s:Min(...)
 endfunction
 
 " HighlightInitP: Initialize the highlight groups for line highlight
-" Based on 'MultipleSearchInit' function developed by Dan Sharp in
-" MultipleSearch2.vim at http://www.vim.org/scripts/script.php?script_id=1183
-function! s:HighlightInitP()
-   let s:pcolor_grp = "PHiColor"
+function! s:HighlightInit()
+   let s:pcolor_grp = "VHiPColor"
    let s:pcolor_n = 0
+
+   let s:colored_words = []
 
    let s:pcolor_max = s:Min(s:ItemCount(g:pcolor_bg . ','), s:ItemCount(g:pcolor_fg . ','))
 
@@ -140,5 +194,5 @@ function! s:HighlightInitP()
 endfunction
 
 
-call s:HighlightInitP()
+call s:HighlightInit()
 
