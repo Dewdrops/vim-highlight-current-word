@@ -131,7 +131,8 @@ function! VHP_HighlightClear()
         let ccol = ccol + 1
     endw
 
-    let s:pcolor_n = 0
+    let s:pcolor_n    = 0
+    let colored_words = []
 endfunction
 
 
