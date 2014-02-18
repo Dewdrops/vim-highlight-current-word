@@ -77,49 +77,57 @@ endif
 
 " Highlight: Toggle highlight word
 function! VHP_HighlightWordToggle()
+    if !exists("b:pcolor_n") | let b:pcolor_n = 0 | endif
+    if !exists("b:colored_words") | let b:colored_words = [] | endif
+
     let cur_word = expand("<cword>")
     let idx = 0
-    while idx < len(s:colored_words)
-        let it = s:colored_words[idx]
+    while idx < len(b:colored_words)
+        let it = b:colored_words[idx]
         if it[0] == cur_word
             exec 'syn clear '. it[1]
-            call remove(s:colored_words, idx)
+            call remove(b:colored_words, idx)
             return
         endif
         let idx = idx + 1
     endwhile
-    let s:pcolor_n = s:pcolor_n == s:pcolor_max - 1 ?  1 : s:pcolor_n + 1
-    call add(s:colored_words, [cur_word, s:pcolor_grp . s:pcolor_n])
-    exec 'syn match ' . s:pcolor_grp . s:pcolor_n . ' "\<' . cur_word . '\>" containedin=ALL'
+    let b:pcolor_n = b:pcolor_n == s:pcolor_max - 1 ?  1 : b:pcolor_n + 1
+    call add(b:colored_words, [cur_word, s:pcolor_grp . b:pcolor_n])
+    exec 'syn match ' . s:pcolor_grp . b:pcolor_n . ' "\<' . cur_word . '\>" containedin=ALL'
 endfunction
 
 " Highlight: Toggle highlight region
 function! VHP_HighlightRegionToggle()
+    if !exists("b:pcolor_n") | let b:pcolor_n = 0 | endif
+    if !exists("b:colored_words") | let b:colored_words = [] | endif
+
     let reg = '"'
     let [save_reg, save_type] = [getreg(reg), getregtype(reg)]
     normal! gvy
     let text = @"
     call setreg(reg, save_reg, save_type)
     let idx = 0
-    while idx < len(s:colored_words)
-        let it = s:colored_words[idx]
+    while idx < len(b:colored_words)
+        let it = b:colored_words[idx]
         if it[0] == text
             exec 'syn clear '. it[1]
-            call remove(s:colored_words, idx)
+            call remove(b:colored_words, idx)
             return
         endif
         let idx = idx + 1
     endwhile
-    let s:pcolor_n = s:pcolor_n == s:pcolor_max - 1 ?  1 : s:pcolor_n + 1
-    call add(s:colored_words, [text, s:pcolor_grp . s:pcolor_n])
-    exec 'syn match ' . s:pcolor_grp . s:pcolor_n . ' "' . text . '" containedin=ALL'
+    let b:pcolor_n = b:pcolor_n == s:pcolor_max - 1 ?  1 : b:pcolor_n + 1
+    call add(b:colored_words, [text, s:pcolor_grp . b:pcolor_n])
+    exec 'syn match ' . s:pcolor_grp . b:pcolor_n . ' "' . text . '" containedin=ALL'
 endfunction
 
 " Highlight: Highlight pattern
 function! VHP_HighlightPattern()
+    if !exists("b:pcolor_n") | let b:pcolor_n = 0 | endif
+
     let pat = input("Pattern: ")
-    let s:pcolor_n = s:pcolor_n == s:pcolor_max - 1 ?  1 : s:pcolor_n + 1
-    exec 'syn match ' . s:pcolor_grp . s:pcolor_n . ' "\<' . pat . '\>" containedin=ALL'
+    let b:pcolor_n = b:pcolor_n == s:pcolor_max - 1 ?  1 : b:pcolor_n + 1
+    exec 'syn match ' . s:pcolor_grp . b:pcolor_n . ' "\<' . pat . '\>" containedin=ALL'
 endfunction
 
 
@@ -131,8 +139,8 @@ function! VHP_HighlightClear()
         let ccol = ccol + 1
     endw
 
-    let s:pcolor_n    = 0
-    let colored_words = []
+    if exists("b:pcolor_n") | let b:pcolor_n = 0 | endif
+    if exists("b:colored_words") | let b:colored_words = [] | endif
 endfunction
 
 
@@ -173,9 +181,6 @@ endfunction
 " HighlightInitP: Initialize the highlight groups for line highlight
 function! s:HighlightInit()
    let s:pcolor_grp = "VHiPColor"
-   let s:pcolor_n = 0
-
-   let s:colored_words = []
 
    let s:pcolor_max = s:Min(s:ItemCount(g:pcolor_bg . ','), s:ItemCount(g:pcolor_fg . ','))
 
