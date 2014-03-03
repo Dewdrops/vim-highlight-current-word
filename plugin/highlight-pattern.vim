@@ -30,7 +30,6 @@ if exists("loaded_highlight")
 endif
 let loaded_highlight = ""
 
-syntax on
 
 " -- Mappings --
 
@@ -178,7 +177,7 @@ function! s:Min(...)
     return min
 endfunction
 
-" HighlightInitP: Initialize the highlight groups for line highlight
+" HighlightInit: Initialize the highlight groups for line highlight
 function! s:HighlightInit()
    let s:pcolor_grp = "VHiPColor"
 
