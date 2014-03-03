@@ -192,8 +192,8 @@ function! s:HighlightInit()
       let fgColor_cterm = s:Strntok(g:pcolor_fg_cterm, ',', ci + 1)
 
       exec 'hi ' . s:pcolor_grp . ci .
-         \ ' guifg =' . fgColor . ' guibg=' . bgColor
-         \ ' ctermfg =' . fgColor_cterm . ' ctermbg=' . bgColor_cterm
+         \ ' guifg=' . fgColor . ' guibg=' . bgColor
+         \ ' ctermfg=' . fgColor_cterm . ' ctermbg=' . bgColor_cterm
 
       let ci = ci + 1
    endw
